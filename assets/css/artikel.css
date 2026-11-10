@@ -1,4 +1,4 @@
-/* der · die · das: Orte in der Stadt v1.0.0 — mismo lenguaje visual que In der Stadt unterwegs / zu-dativ */
+/* der · die · das: Orte in der Stadt v1.0.1 — mismo lenguaje visual que In der Stadt unterwegs / zu-dativ */
 *{box-sizing:border-box}
 :root{--der:#2563c9;--die:#c0302a;--das:#17803f;--derL:#e3edff;--dieL:#ffe5e2;--dasL:#e1f5e8}
 body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(160deg,#fff6d6,#d9f2ff);color:#1f2a44;min-height:100vh}

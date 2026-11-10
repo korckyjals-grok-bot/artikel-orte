@@ -1,4 +1,4 @@
-/* der · die · das — banco de práctica generado de forma determinista. v1.0.0
+/* der · die · das — banco de práctica generado de forma determinista. v1.0.1
    Tipos: art (elige el artículo), cual (¿Cuál está bien?), hor (escucha y elige), sort (ordena en las cajas). */
 (function (g) {
   'use strict';
@@ -19,30 +19,26 @@
     items.push({ id: 'cual-' + p.n, kind: 'mc', type: 'cual', topic: p.a, noun: p.n, w: w(p), fast: true,
       q: '¿Cuál está bien?', pic: p.i, o: ART.map(function (a) { return a + ' ' + p.n; }), a: p.a + ' ' + p.n, say: p.a + ' ' + p.n,
       help: p.n + ' = ' + p.es + '.', e: ex(p) });
-    // 3. Escucha y elige: una opción por artículo; solo una coincide con lo que se oye
-    var o = ART.map(function (a) {
-      if (a === p.a) return p.a + ' ' + p.n;
-      var list = byArt[a], q = list[(idx * 5 + ART.indexOf(a) * 3) % list.length];
-      return q.a + ' ' + q.n;
-    });
+    // 3. Escucha y elige (v1.0.1, N3): el mismo sustantivo con der / die / das; hay que oír el artículo
     items.push({ id: 'hor-' + p.n, kind: 'mc', type: 'hor', topic: p.a, noun: p.n, w: w(p), fast: false, listen: true,
-      q: '🎧 Escucha y elige lo que oíste.', o: o, a: p.a + ' ' + p.n, say: p.a + ' ' + p.n,
+      q: '🎧 Escucha y elige lo que oíste.', o: ART.map(function (a) { return a + ' ' + p.n; }), a: p.a + ' ' + p.n, say: p.a + ' ' + p.n,
       help: 'Se oye: «' + p.a + ' ' + p.n + '» (' + p.es + ').', e: ex(p) });
   });
 
-  // 4. Ordenar en las cajas DER / DIE / DAS (como la hoja): 9 rondas de 6 palabras (2 de cada artículo).
-  //    Las 27 palabras salen al menos una vez; las que se confunden fácilmente, al menos dos. Nunca se repite una palabra en la misma ronda.
-  var SORT_N = 9, SEQ = {};
+  // 4. Ordenar en las cajas DER / DIE / DAS (como la hoja): 9 rondas de 6 palabras.
+  //    v1.0.1 (N7): el reparto por artículo cambia de ronda en ronda (no siempre 2-2-2), así las últimas no se deducen;
+  //    cada ronda tiene al menos una de cada artículo, y cada una de las 27 palabras sale exactamente 2 veces.
+  var SORT_N = 9;
+  var SPLIT = { der: [3, 2, 1, 3, 2, 3, 2, 3, 1], die: [2, 3, 2, 1, 3, 1, 2, 2, 2], das: [1, 1, 3, 2, 1, 2, 2, 1, 3] };
+  var SEQ = {}, POS = { der: 0, die: 0, das: 0 };
   ART.forEach(function (a) {
-    /* 18 casillas por artículo: primero todas sus palabras, luego otra vez (primero las que se confunden fácilmente) */
-    var L = byArt[a], again = L.filter(function (p) { return p.hard; }).concat(L.filter(function (p) { return !p.hard; }));
-    var seq = L.map(function (p) { return p.n; }), k = 0;
-    while (seq.length < SORT_N * 2) { seq.push(again[k % again.length].n); k++; }
-    SEQ[a] = seq;
+    /* dos pasadas: la segunda empieza a la mitad de la lista, para variar las parejas y no repetir palabra en una ronda */
+    var L = byArt[a].map(function (p) { return p.n; }), h = Math.floor(L.length / 2);
+    SEQ[a] = L.concat(L.slice(h), L.slice(0, h));
   });
   for (var s = 0; s < SORT_N; s++) {
     var words = [];
-    ART.forEach(function (a) { words.push(SEQ[a][s * 2], SEQ[a][s * 2 + 1]); });
+    ART.forEach(function (a) { for (var j = 0; j < SPLIT[a][s]; j++) words.push(SEQ[a][POS[a]++]); });
     var hasHard = words.some(function (n) { return D.place(n).hard; });
     items.push({ id: 'sort-' + (s + 1), kind: 'sort', type: 'sort', topic: 'mix', w: hasHard ? 2 : 1, fast: false,
       q: 'Ordena en las cajas: toca una palabra y luego su caja.', words: words,

@@ -1,4 +1,4 @@
-/* der · die · das: Orte in der Stadt — interfaz. v1.0.0 */
+/* der · die · das: Orte in der Stadt — interfaz. v1.0.1 */
 (function () {
   'use strict';
   var D = window.ARTIKEL_DATA, B = window.ARTIKEL_BANK, E = window.ARTIKEL_ENGINE, SP = window.ArtikelSpeech;
@@ -80,11 +80,15 @@
   $('bStudy').onclick = showStudy;
 
   /* ---------------- PRACTICAR / DESAFÍO ---------------- */
+  /* v1.0.1 (A1, paso 4): aviso cuando en Practicar hay un solo artículo marcado */
+  var ONE_ART = '💡 Con un solo artículo todas las respuestas son iguales. Marca dos o tres para practicar de verdad.', oneArt = false;
+  function oneHint() { var n = document.querySelectorAll('#topics input:checked').length; $('oneArt').textContent = ONE_ART; $('oneArt').classList.toggle('hid', n !== 1); }
+  document.querySelectorAll('#topics input').forEach(function (i) { i.addEventListener('change', oneHint); });
   var cur = null, score = 0, streak = 0, done = 0, missed = [], answered = false, chal = false, timer = null, left = 0, chalT = [], repeatQ = [], picker = null;
   function sel() { var s = [].slice.call(document.querySelectorAll('#topics input:checked')).map(function (i) { return i.value; }); return s.length ? s : E.TOPICS.slice(); }
   function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
   function begin(topics, isChal) {
-    score = 0; streak = 0; done = 0; missed = []; chal = isChal;
+    score = 0; streak = 0; done = 0; missed = []; chal = isChal; oneArt = !isChal && topics.length === 1;
     /* Practicar: ponderado (palabras que se confunden fácilmente ×3). Desafío: todos pesan igual */
     picker = E.makePicker(E.pool(B.items, topics, isChal), null, null, !isChal);
     $('sc').textContent = 0; $('st').textContent = 0; show('play'); stopTimer();
@@ -107,7 +111,7 @@
     $('listen').classList.toggle('hid', !cur.listen);
     $('cnt').textContent = 'Preguntas: ' + done;
     $('opts').innerHTML = ''; $('opts').className = ''; $('sortBox').innerHTML = ''; $('sortBox').classList.add('hid');
-    $('msg').textContent = ''; $('exp').classList.add('hid'); $('nx').classList.add('hid'); $('pAct').classList.remove('stick');
+    $('msg').textContent = oneArt ? ONE_ART : ''; $('exp').classList.add('hid'); $('nx').classList.add('hid'); $('pAct').classList.remove('stick');
     $('pHelp').classList.add('hid'); $('pHelp').textContent = '🆘 ' + (cur.help || '');
     $('bHelp').textContent = '🆘 Ayuda';
     if (cur.kind === 'sort') return drawSort();
@@ -151,7 +155,7 @@
     });
     $('sortReset').onclick = function () { if (answered) return; placed = {}; armed = null; box.querySelectorAll('.placed').forEach(function (x) { x.remove(); }); refresh(); };
   }
-  var GOOD = ['¡Muy bien! 🎉', '¡Excelente! ⭐', '¡Correcto! 👏', '¡Eres un crack! 🚀', '¡Súper! 💪', 'Sehr gut! 🇩🇪'];
+  var GOOD = ['¡Muy bien! 🎉', '¡Excelente! ⭐', '¡Correcto! 👏', '¡Lo hiciste genial! 🚀', '¡Súper! 💪', 'Sehr gut! 🇩🇪'];
   function answer(given, el) {
     if (answered) return; answered = true; done++;
     var ok = E.isRight(cur, given), right = E.rightOf(cur);
@@ -192,11 +196,12 @@
   }
   $('bFinish').onclick = finish;
   $('bPractice').onclick = function () { repeatQ = []; begin(sel(), false); };
-  $('bChal').onclick = function () { repeatQ = []; chalT = sel(); begin(chalT, true); };
+  $('bChal').onclick = function () { repeatQ = []; chalT = E.TOPICS.slice(); begin(chalT, true); };
   $('rep').onclick = function () { repeatQ = missed.slice(); begin(E.TOPICS.slice(), false); };
+  /* «Repasar errores» usa los tres artículos: no muestra el aviso de un solo artículo */
 
   /* ---------------- INICIO ---------------- */
-  drawCk(); $('best').textContent = ST.getItem(E.BK) || 0;
+  drawCk(); oneHint(); $('best').textContent = ST.getItem(E.BK) || 0;
   window.__TEST__ = function () {
     return { cur: cur, score: score, done: done, chal: chal, missed: missed, finish: finish, CK: E.CK, BK: E.BK, getCk: function () { return E.getChecks(ST); },
       setScore: function (s, d) { score = s; done = d; $('sc').textContent = s; $('cnt').textContent = 'Preguntas: ' + d; },

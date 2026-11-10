@@ -1,4 +1,4 @@
-/* der · die · das — lógica pura (sin DOM): puntaje, marca verde, selección ponderada sin repetir. v1.0.0 */
+/* der · die · das — lógica pura (sin DOM): puntaje, marca verde, selección ponderada sin repetir. v1.0.1 */
 (function (g) {
   'use strict';
   var CK = 'aleman_check_artikel', BK = 'artikel_best', TOPICS = ['der', 'die', 'das'];
@@ -16,15 +16,14 @@
     }
     return out;
   }
-  /* Practicar: ítems de los artículos elegidos; las rondas de cajas (mezclan los tres) solo con los tres elegidos.
-     Desafío: solo opción múltiple rápida (sin audio ni cajas). */
+  /* v1.0.1 (A1): el Desafío usa siempre las 27 palabras (der, die y das juntos), así no se gana pulsando siempre el mismo artículo.
+     Practicar: ítems de los artículos elegidos; las rondas de cajas (mezclan los tres) solo con los tres elegidos. */
   function pool(items, topics, chal) {
+    if (chal) return items.filter(function (it) { return it.kind === 'mc' && it.fast === true; });
     var all3 = TOPICS.every(function (t) { return topics.indexOf(t) >= 0; });
     return items.filter(function (it) {
-      if (it.topic === 'mix') return !chal && all3;
-      if (topics.indexOf(it.topic) < 0) return false;
-      if (chal) return it.kind === 'mc' && it.fast === true;
-      return true;
+      if (it.topic === 'mix') return all3;
+      return topics.indexOf(it.topic) >= 0;
     });
   }
   function rightOf(it) { return it.kind === 'sort' ? it.a.join(' ') : it.a; }
@@ -32,15 +31,19 @@
   /* Elige al azar con peso (it.w, por defecto 1; en el Desafío todos pesan 1) y evita los últimos N ids */
   function makePicker(list, rng, recentN, weighted) {
     rng = rng || Math.random;
-    var recent = [];
+    var recent = [], lastNoun = null;
     var N = Math.min(recentN == null ? 10 : recentN, Math.max(0, list.length - 1));
     function wt(it) { return weighted ? (it.w || 1) : 1; }
     return function () {
-      var cand = list.filter(function (x) { return recent.indexOf(x.id) < 0; });
+      /* v1.0.1 (N6): además de los últimos N ids, nunca la misma palabra dos veces seguidas (p. ej. art-X y luego cual-X) */
+      var last = lastNoun;
+      var cand = list.filter(function (x) { return recent.indexOf(x.id) < 0 && !(last && x.noun === last); });
+      if (!cand.length) cand = list.filter(function (x) { return !(last && x.noun === last); });
       if (!cand.length) cand = list.slice();
       var tot = cand.reduce(function (s, x) { return s + wt(x); }, 0), r = rng() * tot, pick = cand[cand.length - 1];
       for (var i = 0; i < cand.length; i++) { r -= wt(cand[i]); if (r < 0) { pick = cand[i]; break; } }
       recent.push(pick.id); if (recent.length > N) recent.shift();
+      lastNoun = pick.noun || null;
       return pick;
     };
   }
