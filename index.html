@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alemán: der, die, das · Orte in der Stadt</title>
+<link rel="icon" href="assets/favicon.svg?v=1.0.0" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/artikel.css?v=1.0.0">
+</head><body><div class="wrap">
+<p style="margin:0"><a class="back" href="https://korckyjals-grok-bot.github.io/aleman/" data-app="https://korckyjals-grok-bot.github.io/aleman/" title="Volver a todas las apps de alemán" aria-label="Volver a todas las apps de alemán">⬅️ Alemán</a></p>
+<h1>🏙️ <span class="a-der">der</span> · <span class="a-die">die</span> · <span class="a-das">das</span>: <span lang="de">Orte</span></h1>
+
+<div id="home" class="card">
+<p style="font-size:1.15rem;text-align:center">¡Hola, <span class="nm">amiguito</span>! Practica los artículos <b class="a-der">der</b>, <b class="a-die">die</b> y <b class="a-das">das</b> de los lugares de la ciudad. <a href="#" onclick="cambiarNombre();return false" style="font-size:.9rem;color:#2b8de2;white-space:nowrap">✏️ Cambiar apodo</a></p>
+<p class="hint" style="margin-top:0">Como en la escuela: <span class="dot der"></span>azul = <b>der</b> · <span class="dot die"></span>rojo = <b>die</b> · <span class="dot das"></span>verde = <b>das</b></p>
+<button class="btn g" id="bStudy">📖 Estudiar</button>
+<div class="topics" id="topics">
+<label><input type="checkbox" value="der" checked><span class="dot der"></span><b class="a-der" lang="de">der</b>: Zahnarzt, Park, Zoo…<span class="chk no" data-t="der">✔</span></label>
+<label><input type="checkbox" value="die" checked><span class="dot die"></span><b class="a-die" lang="de">die</b>: Bäckerei, Schule, Post…<span class="chk no" data-t="die">✔</span></label>
+<label><input type="checkbox" value="das" checked><span class="dot das"></span><b class="a-das" lang="de">das</b>: Kino, Hotel, Museum…<span class="chk no" data-t="das">✔</span></label>
+</div>
+<div class="row"><button class="btn" id="bPractice">✏️ Practicar</button><button class="btn o" id="bChal">⏱️ Desafío&nbsp;60&nbsp;s</button></div>
+<p class="hard">⚠️ <b>Palabras que se confunden fácilmente:</b> <span lang="de">die Bäckerei, die Bank, das Rathaus, der Friseur</span>. En Practicar salen más seguido.</p>
+<p style="text-align:center;font-size:1.05rem">✅ Desafío con <b>13 o más y sin errores</b> = marca verde ✔ por artículo elegido.<br>🏆 Récord: <b id="best">0</b><br><span class="hint">En el desafío solo hay opción múltiple rápida (sin audio ni cajas). Solo práctica: no hay notas.</span></p>
+</div>
+
+<div id="study" class="card hid">
+<h2 id="stTitle">📖 Estudiar</h2>
+<div class="tabs" id="stTabs"></div>
+<div id="stBody"></div>
+<div class="row"><button class="btn" id="stSayAll">🔊 Escuchar todo</button><button class="btn y" id="stHelp">🆘 Ayuda</button></div>
+<p class="hint" style="margin:0">Toca una palabra para escucharla.</p>
+<button class="btn r" data-home>🏠 Inicio</button>
+</div>
+
+<div id="play" class="card hid">
+<div class="stats"><span>✅ <span id="sc">0</span></span><span>🔥 Racha: <span id="st">0</span></span><span id="cnt"></span></div>
+<div id="tm" class="timer hid"></div>
+<p style="margin:6px 0"><span class="tag" id="tg"></span></p>
+<div class="q" id="qt"></div>
+<div class="pic hid" id="pic"></div>
+<div id="sen" class="sen hid"><span class="tx" lang="de" id="senTx"></span></div>
+<button class="say big hid" id="listen" aria-label="Escuchar">🔊 Escuchar</button>
+<div id="opts"></div>
+<div id="sortBox" class="hid"></div>
+<div id="msg" class="msg" aria-live="polite"></div>
+<div id="exp" class="exp hid"></div>
+<div id="pHelp" class="help hid"></div>
+<div class="actions" id="pAct"><div class="row"><button class="btn y" id="bHelp">🆘 Ayuda</button><button class="btn g hid" id="nx">Siguiente ➡️</button></div></div>
+<button class="btn r" id="bFinish">Terminar</button>
+</div>
+
+<div id="sum" class="card hid"><h2 id="sumT"></h2><p id="sumP" style="font-size:1.15rem"></p><div id="sumL"></div>
+<button class="btn o hid" id="rep">🔁 Repasar errores</button>
+<button class="btn" data-home>🏠 Inicio</button></div>
+<p class="hint">v1.0.0 · Solo práctica · <a class="back" href="https://korckyjals-grok-bot.github.io/aleman/" data-app="https://korckyjals-grok-bot.github.io/aleman/" title="Volver a todas las apps de alemán" aria-label="Volver a todas las apps de alemán">⬅️ Alemán</a></p>
+</div>
+
+<div id="nmBox" style="display:none;position:fixed;inset:0;background:rgba(31,42,68,.55);z-index:99;align-items:center;justify-content:center;padding:16px">
+<form id="nmForm" style="background:#fff;border-radius:20px;padding:24px;max-width:420px;width:100%;text-align:center;font-family:inherit">
+<p style="font-size:1.4rem;font-weight:700;margin:0 0 12px">👋 ¿Cómo te llamamos?</p>
+<p style="font-size:1.05rem;margin:0 0 12px">Apodo opcional (no hace falta tu nombre real)</p>
+<input id="nmIn" maxlength="20" autocomplete="off" style="width:100%;font-size:1.4rem;padding:12px;border:2px solid #2b8de2;border-radius:12px;text-align:center">
+<button type="submit" style="width:100%;font-size:1.3rem;padding:14px;margin-top:12px;border:0;border-radius:14px;background:#22a35a;color:#fff;font-weight:700;cursor:pointer">¡Listo! ✅</button>
+<button type="button" onclick="document.getElementById('nmBox').style.display='none'" style="width:100%;font-size:1.1rem;padding:12px;margin-top:8px;border:0;border-radius:14px;background:#8a94a8;color:#fff;font-weight:700;cursor:pointer">Seguir como amiguito</button>
+</form></div>
+<script>
+(function(){
+const K="sociales_nombre";
+function clean(s){return (s||"").replace(/[<>"]/g,"").trim().slice(0,20)}
+try{const q=clean(new URLSearchParams(location.search).get("nombre"));if(q)localStorage.setItem(K,q)}catch(e){}
+window.NM=function(){try{return clean(localStorage.getItem(K))||"amiguito"}catch(e){return"amiguito"}};
+function apply(){document.querySelectorAll(".nm").forEach(e=>e.textContent=NM());
+const n=(function(){try{return clean(localStorage.getItem(K))}catch(e){return""}})();
+document.querySelectorAll("a[data-app]").forEach(a=>{a.href=a.dataset.app+(n?"?nombre="+encodeURIComponent(n):"")})}
+window.cambiarNombre=function(){const b=document.getElementById("nmBox"),i=document.getElementById("nmIn");i.value=NM()=="amiguito"?"":NM();b.style.display="flex";i.focus()};
+document.getElementById("nmForm").onsubmit=function(ev){ev.preventDefault();const v=clean(document.getElementById("nmIn").value);if(!v){document.getElementById("nmIn").focus();return}
+try{localStorage.setItem(K,v)}catch(e){}document.getElementById("nmBox").style.display="none";apply()};
+apply();
+})();
+</script>
+<script src="assets/js/data.js?v=1.0.0"></script>
+<script src="assets/js/bank.js?v=1.0.0"></script>
+<script src="assets/js/speech.js?v=1.0.0"></script>
+<script src="assets/js/engine.js?v=1.0.0"></script>
+<script src="assets/js/app.js?v=1.0.0"></script>
+</body></html>
