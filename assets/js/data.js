@@ -1,4 +1,4 @@
-/* der · die · das: Orte in der Stadt — contenido. v1.0.1
+/* der · die · das: Orte in der Stadt — contenido. v1.1.0
    Fuente de las 27 palabras y sus artículos: hoja de trabajo de la clase (DER / DIE / DAS).
    Cada artículo se verificó en Duden (ver README). Solo Nominativ. */
 (function (g) {
@@ -47,5 +47,5 @@
     { t: 'Grupo das', de: 'das Hotel · das Kino · das Theater · das Restaurant', es: 'Estas no tienen truco: apréndelas juntas como un grupo de <b>das</b>.', say: 'das Hotel, das Kino, das Theater, das Restaurant' }
   ];
   function place(n) { for (var i = 0; i < PLACES.length; i++) if (PLACES[i].n === n) return PLACES[i]; return null; }
-  g.ARTIKEL_DATA = { VERSION: '1.0.1', PLACES: PLACES, ART: ART, COLOR: COLOR, TIPS: TIPS, place: place };
+  g.ARTIKEL_DATA = { VERSION: '1.1.0', PLACES: PLACES, ART: ART, COLOR: COLOR, TIPS: TIPS, place: place };
 })(typeof window !== 'undefined' ? window : globalThis);

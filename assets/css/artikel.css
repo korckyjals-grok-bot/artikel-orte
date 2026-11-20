@@ -1,4 +1,4 @@
-/* der · die · das: Orte in der Stadt v1.0.1 — mismo lenguaje visual que In der Stadt unterwegs / zu-dativ */
+/* der · die · das: Orte in der Stadt v1.1.0 — mismo lenguaje visual que In der Stadt unterwegs / zu-dativ */
 *{box-sizing:border-box}
 :root{--der:#2563c9;--die:#c0302a;--das:#17803f;--derL:#e3edff;--dieL:#ffe5e2;--dasL:#e1f5e8}
 body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(160deg,#fff6d6,#d9f2ff);color:#1f2a44;min-height:100vh}
@@ -71,8 +71,17 @@ a.back{color:#2b8de2;font-weight:700;text-decoration:none}
 .actions .row{gap:8px}.actions .btn{margin:4px 0}
 .actions.stick{position:sticky;box-shadow:0 -6px 12px -8px rgba(31,42,68,.25)}
 .msg,.exp,.help{scroll-margin-bottom:110px}
+/* v1.1.0: Desafío sin tiempo */
+.unote{background:#f1ebff;border-radius:12px;padding:10px 12px;font-size:1.05rem;margin:10px 0;text-align:center}
+.modeU{margin:0 0 6px;text-align:center;font-weight:800;color:#7b4fd6;font-size:1.15rem}
+#sumT.neutral{color:#1f2a44}
+.lastfb{font-size:1.1rem;font-weight:700;padding:12px;border-radius:10px;margin:4px 0 10px;border-left:6px solid}
+.lastfb .lx{font-weight:400;font-size:1.02rem;color:#1f2a44}.lastfb .ans{color:#1f2a44}
+.lastfb.bad{background:#fff0ee;border-color:#c7362b;color:#a3231a}
+.lastfb.ok{background:#e9f7ee;border-color:#22a35a;color:#17663a}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1f2a44;color:#fff;padding:12px 18px;border-radius:14px;font-size:1.05rem;z-index:100;max-width:92vw;text-align:center}
 @media (max-width:420px){.wrap{padding:10px}.card{padding:14px}h1{font-size:1.5rem}.btn{font-size:1.15rem}.q{font-size:1.18rem}
  #home .row .btn{padding-left:8px;padding-right:8px;min-width:0}
+ #home .row.modes .btn#bPractice{flex-basis:100%}
  .box{min-height:130px;padding:4px}.box .bh{font-size:1.1rem}.placed{font-size:.92rem}.chip{font-size:1.05rem;padding:8px 10px}
  #opts .opt{font-size:1.2rem}#opts.three .opt{font-size:1.35rem}}

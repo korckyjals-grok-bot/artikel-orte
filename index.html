@@ -3,8 +3,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Alemán: der, die, das · Orte in der Stadt</title>
-<link rel="icon" href="assets/favicon.svg?v=1.0.1" type="image/svg+xml">
-<link rel="stylesheet" href="assets/css/artikel.css?v=1.0.1">
+<link rel="icon" href="assets/favicon.svg?v=1.1.0" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/artikel.css?v=1.1.0">
 </head><body><div class="wrap">
 <p style="margin:0"><a class="back" href="https://korckyjals-grok-bot.github.io/aleman/" data-app="https://korckyjals-grok-bot.github.io/aleman/" title="Volver a todas las apps de alemán" aria-label="Volver a todas las apps de alemán">⬅️ Alemán</a></p>
 <h1>🏙️ <span class="a-der">der</span> · <span class="a-die">die</span> · <span class="a-das">das</span>: <span lang="de">Orte</span></h1>
@@ -19,9 +19,10 @@
 <label><input type="checkbox" value="das" checked><span class="dot das"></span><b class="a-das" lang="de">das</b>: Kino, Hotel, Museum…<span class="chk no" data-t="das">✔</span></label>
 </div>
 <p class="hint hid" id="oneArt" aria-live="polite"></p>
-<div class="row"><button class="btn" id="bPractice">✏️ Practicar</button><button class="btn o" id="bChal">⏱️ Desafío&nbsp;60&nbsp;s</button></div>
+<div class="row modes"><button class="btn" id="bPractice">✏️ Practicar</button><button class="btn o" id="bChal">⏱️ Desafío&nbsp;60&nbsp;s</button><button class="btn p" id="bUntimed">🧩 Desafío sin&nbsp;tiempo</button></div>
 <p class="hard">⚠️ <b>Palabras que se confunden fácilmente:</b> <span lang="de">die Bäckerei, die Bank, das Rathaus, der Friseur</span>. En Practicar salen más seguido.</p>
-<p style="text-align:center;font-size:1.05rem">✅ Desafío con <b>las 27 palabras</b>: <b>13 o más y sin errores</b> = marca verde ✔ en <b>der, die y das</b>.<br>🏆 Récord: <b id="best">0</b><br><span class="hint">En el desafío solo hay opción múltiple rápida (sin audio ni cajas). Solo práctica: no hay notas.</span></p>
+<p style="text-align:center;font-size:1.05rem">✅ Desafío&nbsp;60&nbsp;s con <b>las 27 palabras</b>: <b>13 o más y sin errores</b> = marca verde ✔ en <b>der, die y das</b>.<br>🏆 Récord: <b id="best">0</b><br><span class="hint">En los desafíos solo hay opción múltiple rápida (sin audio ni cajas). Solo práctica: no hay notas.</span></p>
+<p class="unote" id="untimedNote">🧩 <b>Desafío sin tiempo:</b> 20 preguntas de las 27 palabras, sin reloj. Ves tus aciertos y errores, pero no cambia el récord ni la marca verde.<br><span id="bestU">🧩 Aún no tienes mejor marca en el Desafío sin tiempo.</span></p>
 </div>
 
 <div id="study" class="card hid">
@@ -34,7 +35,8 @@
 </div>
 
 <div id="play" class="card hid">
-<div class="stats"><span>✅ <span id="sc">0</span></span><span>🔥 Racha: <span id="st">0</span></span><span id="cnt"></span></div>
+<p class="modeU hid" id="modeU">🧩 Desafío sin tiempo</p>
+<div class="stats"><span>✅ <span id="scLab"></span><span id="sc">0</span></span><span id="erBox" class="hid">❌ Errores: <span id="er">0</span></span><span>🔥 Racha: <span id="st">0</span></span><span id="cnt"></span></div>
 <div id="tm" class="timer hid"></div>
 <p style="margin:6px 0"><span class="tag" id="tg"></span></p>
 <div class="q" id="qt"></div>
@@ -50,10 +52,11 @@
 <button class="btn r" id="bFinish">Terminar</button>
 </div>
 
-<div id="sum" class="card hid"><h2 id="sumT"></h2><p id="sumP" style="font-size:1.15rem"></p><div id="sumL"></div>
+<div id="sum" class="card hid"><div id="sumLast" class="lastfb hid" aria-live="polite"></div><h2 id="sumT"></h2><p id="sumP" style="font-size:1.15rem"></p><div id="sumL"></div>
+<button class="btn p hid" id="again">🔁 Otra vez sin tiempo</button>
 <button class="btn o hid" id="rep">🔁 Repasar errores</button>
 <button class="btn" data-home>🏠 Inicio</button></div>
-<p class="hint">v1.0.1 · Solo práctica · <a class="back" href="https://korckyjals-grok-bot.github.io/aleman/" data-app="https://korckyjals-grok-bot.github.io/aleman/" title="Volver a todas las apps de alemán" aria-label="Volver a todas las apps de alemán">⬅️ Alemán</a></p>
+<p class="hint">v1.1.0 · Solo práctica · <a class="back" href="https://korckyjals-grok-bot.github.io/aleman/" data-app="https://korckyjals-grok-bot.github.io/aleman/" title="Volver a todas las apps de alemán" aria-label="Volver a todas las apps de alemán">⬅️ Alemán</a></p>
 </div>
 
 <div id="nmBox" style="display:none;position:fixed;inset:0;background:rgba(31,42,68,.55);z-index:99;align-items:center;justify-content:center;padding:16px">
@@ -79,9 +82,9 @@ try{localStorage.setItem(K,v)}catch(e){}document.getElementById("nmBox").style.d
 apply();
 })();
 </script>
-<script src="assets/js/data.js?v=1.0.1"></script>
-<script src="assets/js/bank.js?v=1.0.1"></script>
-<script src="assets/js/speech.js?v=1.0.1"></script>
-<script src="assets/js/engine.js?v=1.0.1"></script>
-<script src="assets/js/app.js?v=1.0.1"></script>
+<script src="assets/js/data.js?v=1.1.0"></script>
+<script src="assets/js/bank.js?v=1.1.0"></script>
+<script src="assets/js/speech.js?v=1.1.0"></script>
+<script src="assets/js/engine.js?v=1.1.0"></script>
+<script src="assets/js/app.js?v=1.1.0"></script>
 </body></html>

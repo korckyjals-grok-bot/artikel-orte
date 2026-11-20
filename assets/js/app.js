@@ -1,4 +1,4 @@
-/* der · die · das: Orte in der Stadt — interfaz. v1.0.1 */
+/* der · die · das: Orte in der Stadt — interfaz. v1.1.0 */
 (function () {
   'use strict';
   var D = window.ARTIKEL_DATA, B = window.ARTIKEL_BANK, E = window.ARTIKEL_ENGINE, SP = window.ArtikelSpeech;
@@ -40,7 +40,7 @@
     } catch (e) {}
   }
   function drawCk() { var c = E.getChecks(ST); document.querySelectorAll('.chk').forEach(function (e) { e.classList.toggle('no', c.indexOf(e.dataset.t) < 0); }); }
-  function home() { stopTimer(); stopSpeak(); chal = false; drawCk(); $('best').textContent = ST.getItem(E.BK) || 0; document.querySelectorAll('.nm').forEach(function (e) { e.textContent = window.NM(); }); show('home'); }
+  function home() { stopTimer(); stopSpeak(); chal = false; untimed = false; drawCk(); $('best').textContent = ST.getItem(E.BK) || 0; drawBestU(); document.querySelectorAll('.nm').forEach(function (e) { e.textContent = window.NM(); }); show('home'); }
   document.querySelectorAll('[data-home]').forEach(function (b) { b.onclick = home; });
 
   /* ---------------- ESTUDIAR ---------------- */
@@ -85,14 +85,23 @@
   function oneHint() { var n = document.querySelectorAll('#topics input:checked').length; $('oneArt').textContent = ONE_ART; $('oneArt').classList.toggle('hid', n !== 1); }
   document.querySelectorAll('#topics input').forEach(function (i) { i.addEventListener('change', oneHint); });
   var cur = null, score = 0, streak = 0, done = 0, missed = [], answered = false, chal = false, timer = null, left = 0, chalT = [], repeatQ = [], picker = null;
+  /* v1.1.0: Desafío sin tiempo (uQueue = 20 preguntas únicas del pozo del Desafío 60 s) */
+  var untimed = false, uQueue = [], uGoal = 0, uIdx = 0, errors = 0, finished = false, lastFb = null;
+  function drawBestU() { var b = E.getUntimedBest(ST); $('bestU').innerHTML = b ? '🧩 Mejor sin tiempo: <b>' + b + '</b> de ' + E.UNTIMED_N : '🧩 Aún no tienes mejor marca en el Desafío sin tiempo.'; }
+  function progress() { $('cnt').textContent = untimed ? '📋 Pregunta ' + Math.max(1, Math.min(uIdx, uGoal)) + ' / ' + uGoal : 'Preguntas: ' + done; }
   function sel() { var s = [].slice.call(document.querySelectorAll('#topics input:checked')).map(function (i) { return i.value; }); return s.length ? s : E.TOPICS.slice(); }
   function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
-  function begin(topics, isChal) {
-    score = 0; streak = 0; done = 0; missed = []; chal = isChal; oneArt = !isChal && topics.length === 1;
-    /* Practicar: ponderado (palabras que se confunden fácilmente ×3). Desafío: todos pesan igual */
-    picker = E.makePicker(E.pool(B.items, topics, isChal), null, null, !isChal);
-    $('sc').textContent = 0; $('st').textContent = 0; show('play'); stopTimer();
-    $('bHelp').classList.toggle('hid', isChal);
+  function begin(topics, isChal, isUntimed, forcedPool) {
+    score = 0; streak = 0; done = 0; errors = 0; missed = []; finished = false; lastFb = null;
+    untimed = !!isUntimed; chal = !!isChal && !untimed; oneArt = !chal && !untimed && topics.length === 1;
+    /* Practicar: ponderado (palabras que se confunden fácilmente ×3). Desafío 60 s: todos pesan igual.
+       Desafío sin tiempo: el mismo pozo que el 60 s (las 27 palabras, ¿Qué artículo? y ¿Cuál está bien?), en una cola de preguntas únicas */
+    if (untimed) { uQueue = E.buildUntimedQueue(forcedPool || E.pool(B.items, E.TOPICS, true), E.UNTIMED_N); uGoal = uQueue.length; uIdx = 0; picker = null; }
+    else { uQueue = []; uGoal = 0; uIdx = 0; picker = E.makePicker(E.pool(B.items, topics, chal), null, null, !chal); }
+    $('sc').textContent = 0; $('st').textContent = 0; $('er').textContent = 0; show('play'); stopTimer();
+    $('erBox').classList.toggle('hid', !untimed); $('scLab').textContent = untimed ? 'Aciertos: ' : '';
+    $('modeU').classList.toggle('hid', !untimed);
+    $('bHelp').classList.toggle('hid', chal || untimed);
     if (chal) {
       left = 60; $('tm').classList.remove('hid'); $('tm').textContent = '⏱️ 60';
       timer = setInterval(function () { left--; $('tm').textContent = '⏱️ ' + left; if (left <= 0) finish(); }, 1000);
@@ -102,14 +111,15 @@
   function artOf(o) { return o.split(' ')[0]; }
   function next() {
     stopSpeak();
-    cur = repeatQ.length ? repeatQ.shift() : picker();
+    if (untimed) { if (uIdx >= uGoal) { finish(); return; } cur = uQueue[uIdx++]; }
+    else cur = repeatQ.length ? repeatQ.shift() : picker();
     answered = false;
     $('tg').textContent = TYPE[cur.type];
     $('qt').textContent = cur.q;
     $('pic').textContent = cur.pic || ''; $('pic').classList.toggle('hid', !cur.pic);
     $('senTx').textContent = cur.de || ''; $('sen').classList.toggle('hid', !cur.de);
     $('listen').classList.toggle('hid', !cur.listen);
-    $('cnt').textContent = 'Preguntas: ' + done;
+    progress();
     $('opts').innerHTML = ''; $('opts').className = ''; $('sortBox').innerHTML = ''; $('sortBox').classList.add('hid');
     $('msg').textContent = oneArt ? ONE_ART : ''; $('exp').classList.add('hid'); $('nx').classList.add('hid'); $('pAct').classList.remove('stick');
     $('pHelp').classList.add('hid'); $('pHelp').textContent = '🆘 ' + (cur.help || '');
@@ -170,8 +180,10 @@
       [].forEach.call($('opts').children, function (x) { x.disabled = true; if (x.dataset.v === right) x.classList.add('ok'); else if (x !== el) x.classList.add('dim'); });
     }
     if (ok) { score++; streak++; $('msg').textContent = rnd(GOOD) + (streak >= 3 ? ' ¡Racha de ' + streak + '! 🔥' : ''); }
-    else { if (el) el.classList.add('bad'); streak = 0; missed.push(cur); $('msg').textContent = '¡Casi! Mira la respuesta correcta 💡'; }
-    $('sc').textContent = score; $('st').textContent = streak; $('cnt').textContent = 'Preguntas: ' + done;
+    else { if (el) el.classList.add('bad'); streak = 0; errors++; missed.push(cur); $('msg').textContent = '¡Casi! Mira la respuesta correcta 💡'; }
+    $('sc').textContent = score; $('st').textContent = streak; $('er').textContent = errors; progress();
+    /* Sin tiempo: después de la última pregunta se termina enseguida; su retroalimentación queda en la pantalla final (en rojo si falló) */
+    if (untimed && done >= uGoal) { lastFb = { ok: ok, q: cur, n: done }; finish(); return; }
     if (chal) { setTimeout(function () { if (chal && left > 0) next(); }, ok ? 600 : 1800); return; }
     $('exp').innerHTML = 'ℹ️ ' + (cur.kind === 'sort' ? colorize(cur.e) : cur.e) + (cur.say ? ' <button class="say" id="expSay" aria-label="Escuchar">🔊 Escuchar</button>' : '');
     if ($('expSay')) $('expSay').onclick = function () { speak(cur.say); };
@@ -184,7 +196,11 @@
   $('listen').onclick = function () { if (cur) speak(cur.say); };
   function rightText(q) { return q.kind === 'sort' ? colorize(q.e) : '<span lang="de">' + q.a + (q.type === 'art' ? ' ' + q.noun : '') + '</span>'; }
   function finish() {
-    stopTimer(); stopSpeak(); var wasChal = chal; chal = false; var t = '¡Buen trabajo, ' + window.NM() + '! 🌟';
+    /* Idempotente: el reloj y «Terminar» pueden llegar a la vez; solo cuenta la primera llamada */
+    if (finished) return; finished = true;
+    stopTimer(); stopSpeak(); var wasChal = chal; chal = false; var wasU = untimed; untimed = false; var t = '¡Buen trabajo, ' + window.NM() + '! 🌟';
+    $('again').classList.toggle('hid', !wasU); $('sumLast').classList.add('hid'); $('sumT').className = '';
+    if (wasU) return finishUntimed();
     if (wasChal) {
       var res = E.applyChallenge(ST, chalT, score, done);
       if (res.record) t = '🏆 ¡Nuevo récord: ' + score + '!';
@@ -194,18 +210,41 @@
     $('sumL').innerHTML = missed.length ? '<h3>Para repasar:</h3><ul>' + missed.map(function (q) { return '<li><b>' + q.q + '</b> ' + (q.de ? '<span lang="de">' + q.de + '</span>' : '') + '<br>✔️ ' + rightText(q) + '</li>'; }).join('') + '</ul>' : '<p>¡No tuviste errores! 🎉</p>';
     $('rep').classList.toggle('hid', !missed.length); show('sum');
   }
+  /* Desafío sin tiempo: aciertos y errores; mejor marca propia (artikel_best_untimed). Nunca toca el récord de 60 s ni la marca verde. */
+  function finishUntimed() {
+    var completed = done >= uGoal && uGoal > 0, res = E.applyUntimed(ST, score, uGoal, completed);
+    $('sumT').className = 'neutral';
+    $('sumT').textContent = completed ? '🏁 ¡Terminaste, ' + window.NM() + '!' : '🏁 Saliste en la pregunta ' + Math.max(1, Math.min(uIdx, uGoal)) + ' de ' + uGoal + '.';
+    var p = (completed ? '' : 'Contestaste ' + done + ' de ' + uGoal + ' preguntas. ') + 'Aciertos: ' + score + ' · Errores: ' + errors + '.';
+    if (res.record) p += ' 🏆 ¡Nueva mejor marca sin tiempo!';
+    else if (!completed) p += ' La mejor marca sin tiempo solo cuenta si contestas las ' + uGoal + '.';
+    $('sumP').textContent = p + ' El Desafío sin tiempo no cambia el récord ni la marca verde.';
+    var L = $('sumLast');
+    if (completed && lastFb) {
+      L.className = 'lastfb ' + (lastFb.ok ? 'ok' : 'bad');
+      L.innerHTML = (lastFb.ok ? '✅ Pregunta ' + lastFb.n + ': ¡Correcto!' : '❌ Pregunta ' + lastFb.n + ': no era esa. ✔️ <span class="ans">' + rightText(lastFb.q) + '</span>') + '<br><span class="lx">ℹ️ ' + lastFb.q.e + '</span>';
+    } else L.className = 'lastfb hid';
+    $('sumL').innerHTML = missed.length ? '<h3>Para repasar:</h3><ul>' + missed.map(function (q) { return '<li><b>' + q.q + '</b> ' + (q.de ? '<span lang="de">' + q.de + '</span>' : '') + '<br>✔️ ' + rightText(q) + '</li>'; }).join('') + '</ul>' : (done ? '<p>¡No tuviste errores! 🎉</p>' : '');
+    $('rep').classList.toggle('hid', !missed.length); show('sum');
+  }
   $('bFinish').onclick = finish;
   $('bPractice').onclick = function () { repeatQ = []; begin(sel(), false); };
   $('bChal').onclick = function () { repeatQ = []; chalT = E.TOPICS.slice(); begin(chalT, true); };
+  $('bUntimed').onclick = function () { repeatQ = []; begin(E.TOPICS.slice(), false, true); };
+  $('again').onclick = function () { repeatQ = []; begin(E.TOPICS.slice(), false, true); };
   $('rep').onclick = function () { repeatQ = missed.slice(); begin(E.TOPICS.slice(), false); };
   /* «Repasar errores» usa los tres artículos: no muestra el aviso de un solo artículo */
 
   /* ---------------- INICIO ---------------- */
-  drawCk(); oneHint(); $('best').textContent = ST.getItem(E.BK) || 0;
-  window.__TEST__ = function () {
-    return { cur: cur, score: score, done: done, chal: chal, missed: missed, finish: finish, CK: E.CK, BK: E.BK, getCk: function () { return E.getChecks(ST); },
+  drawCk(); oneHint(); $('best').textContent = ST.getItem(E.BK) || 0; drawBestU();
+  /* Gancho de pruebas: solo con exactamente ?test=1 (ni ?test=0, ?test=true, ?test, ni ?test=1&test=0) */
+  var TEST_ON = false;
+  try { var tv = new URLSearchParams(location.search).getAll('test'); TEST_ON = tv.length === 1 && tv[0] === '1'; } catch (e) { TEST_ON = false; }
+  if (TEST_ON) window.__TEST__ = function () {
+    return { cur: cur, score: score, done: done, errors: errors, chal: chal, untimed: untimed, finished: finished, uQueue: uQueue.slice(), uGoal: uGoal, uIdx: uIdx, missed: missed, finish: finish, CK: E.CK, BK: E.BK, BK_UNTIMED: E.BK_UNTIMED, getCk: function () { return E.getChecks(ST); },
       setScore: function (s, d) { score = s; done = d; $('sc').textContent = s; $('cnt').textContent = 'Preguntas: ' + d; },
-      forceChal: function (t) { chal = true; chalT = t || E.TOPICS.slice(); }, items: B.items,
+      forceChal: function (t) { chal = true; untimed = false; finished = false; chalT = t || E.TOPICS.slice(); }, items: B.items,
+      startUntimed: function (pool) { repeatQ = []; begin(E.TOPICS.slice(), false, true, pool); },
       force: function (id) { var it = B.items.filter(function (x) { return x.id === id; })[0]; if (it) { repeatQ = [it]; next(); } return !!it; } };
   };
 })();
