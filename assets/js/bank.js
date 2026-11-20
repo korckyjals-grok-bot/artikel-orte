@@ -1,4 +1,4 @@
-/* der · die · das — banco de práctica generado de forma determinista. v1.0.1
+/* der · die · das — banco de práctica generado de forma determinista. v1.1.1
    Tipos: art (elige el artículo), cual (¿Cuál está bien?), hor (escucha y elige), sort (ordena en las cajas). */
 (function (g) {
   'use strict';
@@ -22,7 +22,8 @@
     // 3. Escucha y elige (v1.0.1, N3): el mismo sustantivo con der / die / das; hay que oír el artículo
     items.push({ id: 'hor-' + p.n, kind: 'mc', type: 'hor', topic: p.a, noun: p.n, w: w(p), fast: false, listen: true,
       q: '🎧 Escucha y elige lo que oíste.', o: ART.map(function (a) { return a + ' ' + p.n; }), a: p.a + ' ' + p.n, say: p.a + ' ' + p.n,
-      help: 'Se oye: «' + p.a + ' ' + p.n + '» (' + p.es + ').', e: ex(p) });
+      /* v1.1.1: la Ayuda ya no dice lo que se oye (era la respuesta). Da el significado y la vuelve a decir más despacio. */
+      help: 'Significa «' + p.es + '». Escúchala otra vez, más despacio, y fíjate en la primera palabra: ¿der, die o das?', e: ex(p) });
   });
 
   // 4. Ordenar en las cajas DER / DIE / DAS (como la hoja): 9 rondas de 6 palabras.

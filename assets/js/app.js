@@ -1,4 +1,4 @@
-/* der · die · das: Orte in der Stadt — interfaz. v1.1.0 */
+/* der · die · das: Orte in der Stadt — interfaz. v1.1.1 */
 (function () {
   'use strict';
   var D = window.ARTIKEL_DATA, B = window.ARTIKEL_BANK, E = window.ARTIKEL_ENGINE, SP = window.ArtikelSpeech;
@@ -14,15 +14,16 @@
   function store() { try { localStorage.setItem('__t', '1'); localStorage.removeItem('__t'); return localStorage; } catch (e) { var m = {}; return { getItem: function (k) { return k in m ? m[k] : null; }, setItem: function (k, v) { m[k] = String(v); }, removeItem: function (k) { delete m[k]; } }; } }
   var ST = store();
   function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600); }
-  var NOVOICE = '🔇 Este navegador no tiene voz en alemán. Toca 🆘 Ayuda para leer la palabra.';
-  function speak(text) {
+  /* v1.1.1: el aviso ya no manda a 🆘 Ayuda (en «Escucha y elige» la Ayuda ya no muestra lo que se oye) */
+  var NOVOICE = '🔇 Este navegador no tiene voz en alemán. Las palabras están escritas en la pantalla.', noVoice = false;
+  function speak(text, rate) {
     try {
       /* speech.js espera a que carguen las voces antes de decidir que no hay voz alemana; nunca usa una voz inglesa */
-      if (!SP) { toast(NOVOICE); return; }
+      if (!SP) { noVoice = true; toast(NOVOICE); blockHor(); return; }
       SP.speak(String(text), {
-        rate: 0.85,
-        onNoVoice: function () { toast(NOVOICE); },
-        onError: function (e) { var c = e && (e.error || e.message); if (c === 'interrupted' || c === 'canceled') return; toast('🔇 No se pudo reproducir el audio. Toca 🆘 Ayuda para leer la palabra.'); }
+        rate: rate || 0.85,
+        onNoVoice: function () { noVoice = true; toast(NOVOICE); blockHor(); },
+        onError: function (e) { var c = e && (e.error || e.message); if (c === 'interrupted' || c === 'canceled') return; toast('🔇 No se pudo reproducir el audio. Toca 🔊 Escuchar para intentarlo otra vez.'); }
       });
     } catch (e) { toast('🔇 No se pudo reproducir el audio.'); }
   }
@@ -109,10 +110,25 @@
     next();
   }
   function artOf(o) { return o.split(' ')[0]; }
+  /* v1.1.1: sin voz alemana, «Escucha y elige» no se puede jugar (y la Ayuda no puede decir la respuesta).
+     La pregunta abierta se deja pasar sin contar, y desde ahí Practicar ya no elige preguntas de escuchar. */
+  var NOHOR = '🔇 Sin voz alemana, «Escucha y elige» no se puede jugar en este navegador. Toca «Siguiente ➡️» para otra pregunta (esta no cuenta).';
+  function blockHor() {
+    if (!cur || cur.type !== 'hor' || answered || $('play').classList.contains('hid')) return;
+    answered = true; /* no cuenta: done, score y errores no cambian */
+    [].forEach.call($('opts').children, function (x) { x.disabled = true; });
+    $('bHelp').classList.add('hid'); $('pHelp').classList.add('hid'); $('pHelp').innerHTML = ''; $('listen').classList.add('hid');
+    $('msg').textContent = NOHOR; $('nx').classList.remove('hid'); $('pAct').classList.add('stick');
+  }
+  function draw() {
+    var it = repeatQ.length ? repeatQ.shift() : picker();
+    for (var k = 0; noVoice && it && it.type === 'hor' && k < 200; k++) it = repeatQ.length ? repeatQ.shift() : picker();
+    return it;
+  }
   function next() {
     stopSpeak();
     if (untimed) { if (uIdx >= uGoal) { finish(); return; } cur = uQueue[uIdx++]; }
-    else cur = repeatQ.length ? repeatQ.shift() : picker();
+    else cur = draw();
     answered = false;
     $('tg').textContent = TYPE[cur.type];
     $('qt').textContent = cur.q;
@@ -122,8 +138,9 @@
     progress();
     $('opts').innerHTML = ''; $('opts').className = ''; $('sortBox').innerHTML = ''; $('sortBox').classList.add('hid');
     $('msg').textContent = oneArt ? ONE_ART : ''; $('exp').classList.add('hid'); $('nx').classList.add('hid'); $('pAct').classList.remove('stick');
-    $('pHelp').classList.add('hid'); $('pHelp').textContent = '🆘 ' + (cur.help || '');
-    $('bHelp').textContent = '🆘 Ayuda';
+    /* v1.1.1: la ayuda solo se escribe al tocar 🆘 Ayuda (antes quedaba escrita, oculta, en el DOM) */
+    $('pHelp').classList.add('hid'); $('pHelp').innerHTML = '';
+    $('bHelp').textContent = '🆘 Ayuda'; $('bHelp').classList.toggle('hid', chal || untimed);
     if (cur.kind === 'sort') return drawSort();
     if (cur.type === 'art') $('opts').className = 'three';
     E.shuffle(cur.o).forEach(function (o) {
@@ -192,7 +209,23 @@
   }
   var lock = 0;
   $('nx').onclick = function () { if (Date.now() - lock < 400) return; lock = Date.now(); next(); };
-  $('bHelp').onclick = function () { var h = $('pHelp'); h.classList.toggle('hid'); $('bHelp').textContent = h.classList.contains('hid') ? '🆘 Ayuda' : '🙈 Ocultar ayuda'; revealAbove(h, $('pAct')); };
+  /* 🆘 Ayuda (solo Practicar). Nunca contiene la respuesta.
+     «Escucha y elige»: significado + la frase otra vez, más despacio (🐢), sin escribirla. */
+  var SLOW = 0.6;
+  $('bHelp').onclick = function () {
+    var h = $('pHelp'), open = h.classList.contains('hid');
+    if (open && cur) {
+      h.textContent = '🆘 ' + (cur.help || '');
+      if (cur.type === 'hor') {
+        var b = document.createElement('button'); b.className = 'say'; b.id = 'slowSay'; b.setAttribute('aria-label', 'Escuchar despacio'); b.textContent = '🐢 Escuchar despacio';
+        b.onclick = function () { if (cur && cur.type === 'hor') speak(cur.say, SLOW); };
+        h.appendChild(document.createTextNode(' ')); h.appendChild(b);
+        if (!answered) speak(cur.say, SLOW);
+      }
+    }
+    h.classList.toggle('hid', !open); if (!open) h.innerHTML = '';
+    $('bHelp').textContent = open ? '🙈 Ocultar ayuda' : '🆘 Ayuda'; revealAbove(h, $('pAct'));
+  };
   $('listen').onclick = function () { if (cur) speak(cur.say); };
   function rightText(q) { return q.kind === 'sort' ? colorize(q.e) : '<span lang="de">' + q.a + (q.type === 'art' ? ' ' + q.noun : '') + '</span>'; }
   function finish() {
@@ -241,7 +274,7 @@
   var TEST_ON = false;
   try { var tv = new URLSearchParams(location.search).getAll('test'); TEST_ON = tv.length === 1 && tv[0] === '1'; } catch (e) { TEST_ON = false; }
   if (TEST_ON) window.__TEST__ = function () {
-    return { cur: cur, score: score, done: done, errors: errors, chal: chal, untimed: untimed, finished: finished, uQueue: uQueue.slice(), uGoal: uGoal, uIdx: uIdx, missed: missed, finish: finish, CK: E.CK, BK: E.BK, BK_UNTIMED: E.BK_UNTIMED, getCk: function () { return E.getChecks(ST); },
+    return { cur: cur, score: score, done: done, errors: errors, chal: chal, untimed: untimed, finished: finished, uQueue: uQueue.slice(), uGoal: uGoal, uIdx: uIdx, missed: missed, finish: finish, noVoice: noVoice, CK: E.CK, BK: E.BK, BK_UNTIMED: E.BK_UNTIMED, getCk: function () { return E.getChecks(ST); },
       setScore: function (s, d) { score = s; done = d; $('sc').textContent = s; $('cnt').textContent = 'Preguntas: ' + d; },
       forceChal: function (t) { chal = true; untimed = false; finished = false; chalT = t || E.TOPICS.slice(); }, items: B.items,
       startUntimed: function (pool) { repeatQ = []; begin(E.TOPICS.slice(), false, true, pool); },
